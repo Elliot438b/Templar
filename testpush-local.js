@@ -20,7 +20,6 @@ const resQueue = new raq.UniqueQueue(config.queueResName, config.redisPort, conf
 const nameRule = "12345abcdefghijklmnopqrstuvwxyz"
 
 function randomInt(max) {
-    // parseInt(Math.random() * (max + 1), 10);
     return Math.floor(Math.random() * (max + 1));
 }
 
@@ -31,25 +30,25 @@ for (let i = 0; i < 20000; i++) {
     let hash = i % 10;
     let txs = '{"to":"' + to + '","quantity":"' + quantity + '","memo":"' + memo + '"}';
     if (hash == 1) {
-        pushtransactions(txsstr, reqQueue01)
+        pushtransactions(txs, reqQueue01)
     } else if (hash == 2) {
-        pushtransactions(txsstr, reqQueue02)
+        pushtransactions(txs, reqQueue02)
     } else if (hash == 3) {
-        pushtransactions(txsstr, reqQueue03)
+        pushtransactions(txs, reqQueue03)
     } else if (hash == 4) {
-        pushtransactions(txsstr, reqQueue04)
+        pushtransactions(txs, reqQueue04)
     } else if (hash == 5) {
-        pushtransactions(txsstr, reqQueue05)
+        pushtransactions(txs, reqQueue05)
     } else if (hash == 6) {
-        pushtransactions(txsstr, reqQueue06)
+        pushtransactions(txs, reqQueue06)
     } else if (hash == 7) {
-        pushtransactions(txsstr, reqQueue07)
+        pushtransactions(txs, reqQueue07)
     } else if (hash == 8) {
-        pushtransactions(txsstr, reqQueue08)
+        pushtransactions(txs, reqQueue08)
     } else if (hash == 9) {
-        pushtransactions(txsstr, reqQueue09)
+        pushtransactions(txs, reqQueue09)
     } else {
-        pushtransactions(txsstr, reqQueue)
+        pushtransactions(txs, reqQueue)
     }
 }
 
