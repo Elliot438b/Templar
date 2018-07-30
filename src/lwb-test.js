@@ -279,17 +279,53 @@ function testPushTX(srcAccount, destAccount) {
 // eos.abiBinToJson("eosio.token","transfer","0082c95865ea30550086c95865ea3055e8030000000000000453595300000000053333333333").then(ret=>{
 //     console.log(ret.args.memo)
 // })
-const resQueue = new raq.UniqueQueue(config.queueResName, config.redisPort, config.redisUrl, {});
+const resQueue = new raq.UniqueQueue("action_queue", config.redisPort, config.redisUrl, {});
 
 function getResQueue() {
-    resQueue.get(-1, function (err, messages) {
-        if (err != null) console.log(err);
-        if (messages.length) {
-            for (let key in messages) {
-                let msg = messages[key]
-                console.log("consume：" + msg.message + "  " + msg.updatedAt)
-            }
+    // resQueue.get(-1, function (err, messages) {
+    //     if (err != null) console.log(err);
+    //     if (messages.length) {
+    //         console.log(messages.length);
+    //         for (let key in messages) {
+    //             let msg = messages[key]
+    //             console.log("consume：" + msg.message + "  " + msg.updatedAt)
+    //         }
+    //     }
+    // });
+    // resQueue.pop(function (err, data) {
+    //     console.log(data);
+    // })
+    const redis = require("redis");
+    const client = redis.createClient('6379', '39.107.61.35')
+
+    //
+    // client.scard("action_queue", function (err, response) {
+    //     console.log("Number of key roban:demo:sdemo is:" + response);
+    // });
+    // let commands = ['_raq_✿:action_queue', '-inf', '+inf', 'WITHSCORES'];
+    // client.zrangebyscore(commands, function (err, messages) {
+    //     for (var i = 0; i < messages.length; i += 2) {
+    //         console.log({message: messages[i], updatedAt: parseInt(messages[i + 1])});
+    //     }
+    // });
+    // let commands1 = ['_raq_✿:action_queue'];
+    // client.lpop(commands1, function (err, response) {
+    //     console.log("Poped value of key is:" + response);
+    // });
+    client.rpush('dataQueue', 'sad***')
+    client.rpush('dataQueue', 'sad222')
+    client.rpop('dataQueue', function (error, data) {
+        if (error) {
+            console.error('There has been an error:', error);
         }
-    });
+        console.log(data);
+    })
+    client.rpop('dataQueue', function (error, data) {
+        if (error) {
+            console.error('There has been an error:', error);
+        }
+        console.log(data);
+    })
 }
-// getResQueue()
+
+getResQueue()
