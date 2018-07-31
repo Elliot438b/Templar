@@ -18,7 +18,7 @@ const config = {
     optLocal: {expireInSeconds: 120, broadcast: false},
     queueReqName: 'action_queue',
     queueResName: 'action_res_queue',
-    redisUrl: '39.107.61.35',
+    redisUrl: '39.107.152.239',
     redisPort: 6379,
     listen_queue: true,
     ok: true,
@@ -57,7 +57,7 @@ const actionPool = function () {
     }
 }();
 const txPool = function () {
-    let pool = []
+    let pool = [];
     return {
         push: function (obj) {
             pool.push(obj)
@@ -74,7 +74,7 @@ const txPool = function () {
     }
 }();
 const queueFlag = function () {
-    let pool = []
+    let pool = [];
     return {
         push: function (obj) {
             pool.push(obj)
