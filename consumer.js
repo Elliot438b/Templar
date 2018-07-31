@@ -4,7 +4,7 @@ function consumer(queue) {
         let counter_200 = 0;
         let counter_500 = 0;
         for (let key in messages) {
-            let msg = messages[key].message;
+            let msg = messages[key];
             let msgObj = JSON.parse(msg);
             if (msgObj.code == 200) {
                 counter_200++;
@@ -23,9 +23,9 @@ function consumer(queue) {
     //         }
     //     }
     // });
-    queue.removeAmount(-1, function (err) {
-        if (err != null) console.log(err);
-    });
+    // queue.removeAmount(-1, function (err) {
+    //     if (err != null) console.log(err);
+    // });
 }
 
 module.exports = consumer;

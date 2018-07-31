@@ -279,9 +279,33 @@ function testPushTX(srcAccount, destAccount) {
 // eos.abiBinToJson("eosio.token","transfer","0082c95865ea30550086c95865ea3055e8030000000000000453595300000000053333333333").then(ret=>{
 //     console.log(ret.args.memo)
 // })
-const resQueue = new raq.UniqueQueue("action_queue", config.redisPort, config.redisUrl, {});
+const testQueue = new raq.NormalQueue("lwb-test", config.redisPort, config.redisUrl, {});
 
 function getResQueue() {
+    testQueue.push("1", function (err) {
+        if (err != null) console.log(err);
+    });
+    testQueue.push("2", function (err) {
+        if (err != null) console.log(err);
+    });
+    testQueue.push("3", function (err) {
+        if (err != null) console.log(err);
+    });
+    testQueue.pop(function (err, data) {
+        console.log(data);
+    });
+    testQueue.pop(function (err, data) {
+        console.log(data);
+    });
+    testQueue.pop(function (err, data) {
+        console.log(data);
+    });
+    testQueue.pop(function (err, data) {
+        console.log(data);
+    });
+    testQueue.pop(function (err, data) {
+        console.log(data);
+    });
     // resQueue.get(-1, function (err, messages) {
     //     if (err != null) console.log(err);
     //     if (messages.length) {
@@ -295,8 +319,8 @@ function getResQueue() {
     // resQueue.pop(function (err, data) {
     //     console.log(data);
     // })
-    const redis = require("redis");
-    const client = redis.createClient('6379', '39.107.61.35')
+    // const redis = require("redis");
+    // const client = redis.createClient('6379', '39.107.61.35')
 
     //
     // client.scard("action_queue", function (err, response) {
@@ -312,20 +336,20 @@ function getResQueue() {
     // client.lpop(commands1, function (err, response) {
     //     console.log("Poped value of key is:" + response);
     // });
-    client.rpush('dataQueue', 'sad***')
-    client.rpush('dataQueue', 'sad222')
-    client.rpop('dataQueue', function (error, data) {
-        if (error) {
-            console.error('There has been an error:', error);
-        }
-        console.log(data);
-    })
-    client.rpop('dataQueue', function (error, data) {
-        if (error) {
-            console.error('There has been an error:', error);
-        }
-        console.log(data);
-    })
+    // client.rpush('dataQueue', 'sad***')
+    // client.rpush('dataQueue', 'sad222')
+    // client.rpop('dataQueue', function (error, data) {
+    //     if (error) {
+    //         console.error('There has been an error:', error);
+    //     }
+    //     console.log(data);
+    // })
+    // client.rpop('dataQueue', function (error, data) {
+    //     if (error) {
+    //         console.error('There has been an error:', error);
+    //     }
+    //     console.log(data);
+    // })
 }
 
 getResQueue()
