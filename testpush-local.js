@@ -2,7 +2,7 @@ const raq = require("redis-as-queue");
 const config = {
     queueReqName: 'action_queue',
     queueResName: 'action_res_queue',
-    redisUrl: '39.107.152.239',
+    redisUrl: '127.0.0.1',
     redisPort: 6379
 };
 const reqQueue = new raq.UniqueQueue(config.queueReqName, config.redisPort, config.redisUrl, {});

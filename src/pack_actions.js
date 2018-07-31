@@ -18,7 +18,7 @@ const config = {
     optLocal: {expireInSeconds: 120, broadcast: false},
     queueReqName: 'action_queue',
     queueResName: 'action_res_queue',
-    redisUrl: '39.107.152.239',
+    redisUrl: '127.0.0.1',
     redisPort: 6379,
     listen_queue: true,
     ok: true,
