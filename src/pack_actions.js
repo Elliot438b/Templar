@@ -26,8 +26,10 @@ const config = {
 };
 const actionPool = function () {
     let pool = {};
+    let size = 0;
     return {
         add: function (k, v) {
+            size++;
             if (pool.hasOwnProperty(k)) {
                 let temp = pool[k];
                 if (temp instanceof Array) {
@@ -49,10 +51,14 @@ const actionPool = function () {
             return pool[k];
         },
         remove: function (k) {
+            size--;
             delete pool[k];
         },
         getPool: function (k) {
             return pool;
+        },
+        getSize: function () {
+            return size;
         }
     }
 }();
@@ -67,20 +73,6 @@ const txPool = function () {
         },
         getPool: function () {
             return pool;
-        },
-        empty: function () {
-            pool = []
-        }
-    }
-}();
-const queueFlag = function () {
-    let pool = []
-    return {
-        push: function (obj) {
-            pool.push(obj)
-        },
-        getSize: function () {
-            return pool.length;
         },
         empty: function () {
             pool = []
@@ -117,108 +109,63 @@ function createTxLocalByActionPool(callback) {
 }
 
 let start = new Date().getTime();
-const resQueue = new raq.UniqueQueue(config.queueResName, config.redisPort, config.redisUrl, {});
+const reqQueue = new raq.NormalQueue(config.queueReqName, config.redisPort, config.redisUrl, {});
+const resQueue = new raq.NormalQueue(config.queueResName, config.redisPort, config.redisUrl, {});
+let req_empty_flag = false;
 
-function reqQueuesConsume(reqQueue) {
+function reqQueuesConsume() {
     let size = config.action_pool_size * config.trx_pool_size;
-    reqQueue.get(size, function (err, messages) {
+    // Pop first element from the list.
+    reqQueue.pop(function (err, data) {
         if (err != null) {
             console.log(err);
             return;
         }
-        let dealmsgs = messages;
-        if (dealmsgs.length) {
-            if (dealmsgs.length == size) {
-                removeReqQueue(reqQueue, dealmsgs, size);
-                console.log(reqQueue.queueName + " get: " + dealmsgs.length);
-                for (let key in dealmsgs) {
-                    let msg = dealmsgs[key].message;
-                    let msgJson = JSON.parse(msg);
-                    console.log(reqQueue.queueName + " get memo: " + msgJson.memo);
-                    actionPool.add(fz_owner, createTransferAction(fz_owner, msgJson.to, msgJson.quantity, msgJson.memo));
-                }
-                createTxLocalByActionPool(tx => {
-                        txPool.push(tx.transaction);
-                        if (txPool.getSize() == config.trx_pool_size) {
-                            var signTxs = txPool.getPool();
-                            txPool.empty();
-                            eos.pushTransactions(signTxs).then(ret => {
-                                for (let i in ret) {
-                                    let processed = ret[i].processed;
-                                    // once trx failed, all of its actions failed.
-                                    if (processed.error != null) {
-                                        // ？？communication fault（e.g. RPC req）: once one of trxs failed, all of the trxs failed.
-                                        for (let j in signTxs) {
-                                            let failed_actions = signTxs[j].transaction.actions;
-                                            for (let k in failed_actions) {
-                                                let hexData = failed_actions[k].data;
-                                                eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
-                                                    resQueueProductor(ret.args.memo, "failed", 500, resQueue);
-                                                });
-                                            }
-                                        }
-                                    } else {
-                                        let actions = processed.action_traces;
-                                        for (let key in actions) {
-                                            resQueueProductor(actions[key].act.data.memo, "success", 200, resQueue);
+        if (data == null) {
+            req_empty_flag = true;
+            return;
+        }
+        console.log(data);
+        let dataJson = JSON.parse(data);
+        actionPool.add(fz_owner, createTransferAction(fz_owner, dataJson.to, dataJson.quantity, dataJson.memo));
+        if (actionPool.getSize() == size) {
+            createTxLocalByActionPool(tx => {
+                    txPool.push(tx.transaction);
+                    if (txPool.getSize() == config.trx_pool_size) {
+                        var signTxs = txPool.getPool();
+                        txPool.empty();
+                        eos.pushTransactions(signTxs).then(ret => {
+                            for (let i in ret) {
+                                let processed = ret[i].processed;
+                                // once trx failed, all of its actions failed.
+                                if (processed.error != null) {
+                                    for (let j in signTxs) {
+                                        let failed_actions = signTxs[j].transaction.actions;
+                                        for (let k in failed_actions) {
+                                            let hexData = failed_actions[k].data;
+                                            eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
+                                                resQueueProductor(ret.args.memo, "failed", 500);
+                                            });
                                         }
                                     }
+                                } else {
+                                    let actions = processed.action_traces;
+                                    for (let key in actions) {
+                                        resQueueProductor(actions[key].act.data.memo, "success", 200);
+                                    }
                                 }
-                            });
-                        }
+                            }
+                        });
                     }
-                );
-            } else { // Not full as a batch unit.
-                let msgLength = dealmsgs.length;
-                removeReqQueue(reqQueue, dealmsgs, msgLength);
-                console.log(reqQueue.queueName + " get: " + msgLength);
-                for (let key in dealmsgs) {
-                    let msg = dealmsgs[key].message;
-                    let msgJson = JSON.parse(msg);
-                    console.log(reqQueue.queueName + " get memo: " + msgJson.memo);
-                    actionPool.add(fz_owner, createTransferAction(fz_owner, msgJson.to, msgJson.quantity, msgJson.memo));
                 }
+            );
+        } else {//  // Not enough to be a batch unit.
 
-                createTxLocalByActionPool(tx => {
-                    eos.pushTransaction(tx.transaction).then(ret => {
-                        let processed = ret.processed;
-                        if (processed.error != null) {
-                            let failed_actions = tx.transaction.transaction.actions;
-                            for (let k in failed_actions) {
-                                let hexData = failed_actions[k].data;
-                                eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
-                                    resQueueProductor(ret.args.memo, "failed", 500, resQueue);
-                                });
-                            }
-                        } else {
-                            let actions = processed.action_traces;
-                            for (let key in actions) {
-                                resQueueProductor(actions[key].act.data.memo, "success", 200, resQueue);
-                            }
-                        }
-                    })
-                });
-            }
-        } else { // Queue empty.
-            // console.log(reqQueue.queueName + "  batch deal complete, spend time: " + (new Date().getTime() - start) + " ms")
-            queueFlag.push(true);
-        }
-    })
-}
-
-function removeReqQueue(reqQueue, messages, size) {
-    reqQueue.removeMessages(messages, function (err, removeCount, notRemovedMessages) {
-        if (err != null) console.log(err);
-        if (removeCount == size) {
-            // queueFlag.push(true); // Consume once and return.
-            reqQueuesConsume(reqQueue);
-        } else {
-            removeReqQueue(reqQueue, notRemovedMessages, size - removeCount)
         }
     });
 }
 
-function resQueueProductor(uuid, status, code, resQueue) {
+function resQueueProductor(uuid, status, code) {
     let action_res = '{"code":"' + code + '","status":"' + status + '","uuid":"' + uuid + '"}';
     console.log(action_res);
     resQueue.push(action_res, function (err) {
@@ -226,32 +173,18 @@ function resQueueProductor(uuid, status, code, resQueue) {
     });
 }
 
-function queueReqHandler() {
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName, config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "01", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "02", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "03", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "04", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "05", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "06", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "07", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "08", config.redisPort, config.redisUrl, {}));
-    reqQueuesConsume(new raq.UniqueQueue(config.queueReqName + "09", config.redisPort, config.redisUrl, {}));
-}
-
 // init
-queueReqHandler();
+reqQueuesConsume();
 
 /**
  * listening queue
  */
 if (config.listen_queue) {
     let interval = setInterval(function () {
-        if (queueFlag.getSize() == 10) {
+        if (req_empty_flag) {
             console.log("listening... " + (new Date().getTime() - start) + " ms");
-            queueFlag.empty();
-            queueReqHandler();
             clearInterval(interval);
         }
+        reqQueuesConsume();
     }, config.queue_listen_interval);
 }

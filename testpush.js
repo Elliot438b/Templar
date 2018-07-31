@@ -7,7 +7,7 @@ function randomInt(max) {
     return Math.floor(Math.random() * (max + 1));
 }
 
-for (let i = 0; i < 20000; i++) {
+for (let i = 0; i < 1000; i++) {
     // let com = nameRule.charAt(randomInt(30))
     // let to = "\"eosiotestb" + com + "\""
     let to = "eosiotestb1"
