@@ -1,4 +1,4 @@
-function consumer(queue) {
+function consumer(queue, empty) {
     queue.get(-1, function (err, messages) {
         if (err != null) console.log(err);
         let counter_200 = 0;
@@ -23,9 +23,11 @@ function consumer(queue) {
     //         }
     //     }
     // });
-    // queue.removeAmount(-1, function (err) {
-    //     if (err != null) console.log(err);
-    // });
+    if (empty) {
+        queue.removeAmount(-1, function (err) {
+            if (err != null) console.log(err);
+        });
+    }
 }
 
 module.exports = consumer;

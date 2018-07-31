@@ -37,7 +37,12 @@ function onRequest(req, res) {
             else
                 outputmsg(res, 'no txs para ,check again!')
         } else if (p.pathname == '/consumeTrxRes') {
-            consumer(resQueue);
+            let emptyFlag = query.empty;
+            if (emptyFlag == 'true') {
+                consumer(resQueue, true);
+            } else {
+                consumer(resQueue, false);
+            }
             outputmsg(res, "success");
         } else if (p.pathname == '/checkQueue') {
             checkQueue();
