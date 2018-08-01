@@ -115,59 +115,95 @@ let req_empty_flag = false;
 
 function reqQueuesConsume() {
     let size = config.action_pool_size * config.trx_pool_size;
-    // Pop first element from the list.
-    reqQueue.pop(function (err, data) {
+    reqQueue.pop(size, function (err, replies) {
         if (err != null) {
             console.log(err);
             return;
         }
-        if (data == null) {
-            req_empty_flag = true;
-            return;
-        }
-        console.log(data);
-        let dataJson = JSON.parse(data);
-        actionPool.add(fz_owner, createTransferAction(fz_owner, dataJson.to, dataJson.quantity, dataJson.memo));
-        if (actionPool.getSize() == size) {
-            createTxLocalByActionPool(tx => {
-                    txPool.push(tx.transaction);
-                    if (txPool.getSize() == config.trx_pool_size) {
-                        var signTxs = txPool.getPool();
-                        txPool.empty();
-                        eos.pushTransactions(signTxs).then(ret => {
-                            for (let i in ret) {
-                                let processed = ret[i].processed;
-                                // once trx failed, all of its actions failed.
-                                if (processed.error != null) {
-                                    for (let j in signTxs) {
-                                        let failed_actions = signTxs[j].transaction.actions;
-                                        for (let k in failed_actions) {
-                                            let hexData = failed_actions[k].data;
-                                            eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
-                                                resQueueProductor(ret.args.memo, "failed", 500);
-                                            });
+        let dealmsgs = [];
+        replies.forEach(function (reply, index) {
+            if (reply != null) {
+                dealmsgs.push(reply);
+            }
+        });
+        if (dealmsgs.length > 0) {
+            console.log(reqQueue.queueName + " get: " + dealmsgs.length);
+            if (dealmsgs.length == size) {
+                for (let key in dealmsgs) {
+                    let msg = dealmsgs[key];
+                    let msgJson = JSON.parse(msg);
+                    console.log(reqQueue.queueName + " get memo: " + msgJson.memo);
+                    actionPool.add(fz_owner, createTransferAction(fz_owner, msgJson.to, msgJson.quantity, msgJson.memo));
+                }
+                createTxLocalByActionPool(tx => {
+                        txPool.push(tx.transaction);
+                        if (txPool.getSize() == config.trx_pool_size) {
+                            var signTxs = txPool.getPool();
+                            txPool.empty();
+                            eos.pushTransactions(signTxs).then(ret => {
+                                for (let i in ret) {
+                                    let processed = ret[i].processed;
+                                    // once trx failed, all of its actions failed.
+                                    if (processed.error != null) {
+                                        // ？？communication fault（e.g. RPC req）: once one of trxs failed, all of the trxs failed.
+                                        // for (let j in signTxs) {
+                                        //     let failed_actions = signTxs[j].transaction.actions;
+                                        //     for (let k in failed_actions) {
+                                        //         let hexData = failed_actions[k].data;
+                                        //         eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
+                                        //             resQueueProductor(ret.args.memo, "failed", 500, resQueue);
+                                        //         });
+                                        //     }
+                                        // }
+                                        console.log("item in pool failed...")
+                                    } else {
+                                        let actions = processed.action_traces;
+                                        for (let key in actions) {
+                                            resQueueProductor(actions[key].act.data.memo, "success", 200, resQueue);
                                         }
                                     }
-                                } else {
-                                    let actions = processed.action_traces;
-                                    for (let key in actions) {
-                                        resQueueProductor(actions[key].act.data.memo, "success", 200);
-                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
+                );
+            } else { // Not full as a batch unit.
+                for (let key in dealmsgs) {
+                    let msg = dealmsgs[key].message;
+                    let msgJson = JSON.parse(msg);
+                    console.log(reqQueue.queueName + " get memo: " + msgJson.memo);
+                    actionPool.add(fz_owner, createTransferAction(fz_owner, msgJson.to, msgJson.quantity, msgJson.memo));
                 }
-            );
-        } else {//  // Not enough to be a batch unit.
 
+                createTxLocalByActionPool(tx => {
+                    eos.pushTransaction(tx.transaction).then(ret => {
+                        let processed = ret.processed;
+                        if (processed.error != null) {
+                            // let failed_actions = tx.transaction.transaction.actions;
+                            // for (let k in failed_actions) {
+                            //     let hexData = failed_actions[k].data;
+                            //     eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
+                            //         resQueueProductor(ret.args.memo, "failed", 500, resQueue);
+                            //     });
+                            // }
+                            console.log("single item failed...")
+                        } else {
+                            let actions = processed.action_traces;
+                            for (let key in actions) {
+                                resQueueProductor(actions[key].act.data.memo, "success", 200, resQueue);
+                            }
+                        }
+                    })
+                });
+            }
+        } else { // Queue empty.
+            req_empty_flag = true;
         }
-    });
+    })
 }
 
 function resQueueProductor(uuid, status, code) {
     let action_res = '{"code":"' + code + '","status":"' + status + '","uuid":"' + uuid + '"}';
-    console.log(action_res);
     resQueue.push(action_res, function (err) {
         if (err != null) console.log(err);
     });

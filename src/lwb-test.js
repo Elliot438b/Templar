@@ -279,33 +279,39 @@ function testPushTX(srcAccount, destAccount) {
 // eos.abiBinToJson("eosio.token","transfer","0082c95865ea30550086c95865ea3055e8030000000000000453595300000000053333333333").then(ret=>{
 //     console.log(ret.args.memo)
 // })
-const testQueue = new raq.NormalQueue("lwb-test", config.redisPort, config.redisUrl, {});
+const testQueue = new raq.NormalQueue("lwb-test-00", config.redisPort, config.redisUrl, {});
 
 function getResQueue() {
-    testQueue.push("1", function (err) {
-        if (err != null) console.log(err);
+    // testQueue.push("1", function (err) {
+    //     if (err != null) console.log(err);
+    // });
+    // testQueue.push("2", function (err) {
+    //     if (err != null) console.log(err);
+    // });
+    testQueue.pop(100, function (err, replies) {
+        if (err != null) {
+            console.log(1);
+        } else {
+            console.log("MULTI got " + replies.length + " replies");
+            replies.forEach(function (reply, index) {
+                if (reply != null) {
+                    console.log(reply)
+                }
+            });
+        }
     });
-    testQueue.push("2", function (err) {
-        if (err != null) console.log(err);
-    });
-    testQueue.push("3", function (err) {
-        if (err != null) console.log(err);
-    });
-    testQueue.pop(function (err, data) {
-        console.log(data);
-    });
-    testQueue.pop(function (err, data) {
-        console.log(data);
-    });
-    testQueue.pop(function (err, data) {
-        console.log(data);
-    });
-    testQueue.pop(function (err, data) {
-        console.log(data);
-    });
-    testQueue.pop(function (err, data) {
-        console.log(data);
-    });
+    // testQueue.pop(function (err, data) {
+    //     console.log(data);
+    // });
+    // testQueue.pop(function (err, data) {
+    //     console.log(data);
+    // });
+    // testQueue.pop(function (err, data) {
+    //     console.log(data);
+    // });
+    // testQueue.pop(function (err, data) {
+    //     console.log(data);
+    // });
     // resQueue.get(-1, function (err, messages) {
     //     if (err != null) console.log(err);
     //     if (messages.length) {
@@ -321,7 +327,30 @@ function getResQueue() {
     // })
     // const redis = require("redis");
     // const client = redis.createClient('6379', '39.107.61.35')
-
+    // client.rpush("lwb-test01", "lwb-test01", function (err, reply) {
+    //     console.log("rpush is: " + reply);
+    // })
+    // client.rpush("lwb-test111", "lwb", function (err, reply) {
+    //     console.log("rpush is: " + reply);
+    // })
+    // client.rpush("lwb-test111", "fxs", function (err, reply) {
+    //     console.log("rpush is: " + reply);
+    // })
+    // let keys = [];
+    // keys.push("lwb-test")
+    // keys.push("lwb-test01")
+    // client.blpop(["lwb-test", "lwb-test01", 1], function (err, reply) {
+    //     console.log("reply is: " + reply);
+    // })
+    // let multi = client.multi();
+    // multi.lpop("lwb-test111");
+    // multi.lpop("lwb-test111");
+    // multi.exec(function (err, replies) {
+    //     console.log("MULTI got " + replies.length + " replies");
+    //     replies.forEach(function (reply, index) {
+    //         console.log("Reply " + index + ": " + reply.toString());
+    //     });
+    // });
     //
     // client.scard("action_queue", function (err, response) {
     //     console.log("Number of key roban:demo:sdemo is:" + response);
