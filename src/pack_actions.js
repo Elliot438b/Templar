@@ -6,7 +6,7 @@ const eos = Eos({
     httpEndpoint: 'http://39.107.152.239:8000',
     chainId: '1c6ae7719a2a3b4ecb19584a30ff510ba1b6ded86e1fd8b8fc22f1179c622a32',
     keyProvider: keyProvider,
-    expireInSeconds: 120,
+    expireInSeconds: 50,
     broadcast: false,
     verbose: false
 });
@@ -14,8 +14,8 @@ const config = {
     trx_pool_size: 10,
     action_pool_size: 5,
     queue_listen_interval: 1, // ms
-    optBCST: {expireInSeconds: 120, broadcast: true},
-    optLocal: {expireInSeconds: 120, broadcast: false},
+    optBCST: {expireInSeconds: 50, broadcast: true},
+    optLocal: {expireInSeconds: 100, broadcast: false},
     queueReqName: 'action_queue',
     queueResName: 'action_res_queue',
     redisUrl: '127.0.0.1',
@@ -148,15 +148,16 @@ function reqQueuesConsume(reqQueue) {
                                     // once trx failed, all of its actions failed.
                                     if (processed.error != null) {
                                         // ？？communication fault（e.g. RPC req）: once one of trxs failed, all of the trxs failed.
-                                        for (let j in signTxs) {
-                                            let failed_actions = signTxs[j].transaction.actions;
-                                            for (let k in failed_actions) {
-                                                let hexData = failed_actions[k].data;
-                                                eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
-                                                    resQueueProductor(ret.args.memo, "failed", 500, resQueue);
-                                                });
-                                            }
-                                        }
+                                        // for (let j in signTxs) {
+                                        //     let failed_actions = signTxs[j].transaction.actions;
+                                        //     for (let k in failed_actions) {
+                                        //         let hexData = failed_actions[k].data;
+                                        //         eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
+                                        //             resQueueProductor(ret.args.memo, "failed", 500, resQueue);
+                                        //         });
+                                        //     }
+                                        // }
+                                        console.log("item in pool failed...")
                                     } else {
                                         let actions = processed.action_traces;
                                         for (let key in actions) {
@@ -183,13 +184,14 @@ function reqQueuesConsume(reqQueue) {
                     eos.pushTransaction(tx.transaction).then(ret => {
                         let processed = ret.processed;
                         if (processed.error != null) {
-                            let failed_actions = tx.transaction.transaction.actions;
-                            for (let k in failed_actions) {
-                                let hexData = failed_actions[k].data;
-                                eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
-                                    resQueueProductor(ret.args.memo, "failed", 500, resQueue);
-                                });
-                            }
+                            // let failed_actions = tx.transaction.transaction.actions;
+                            // for (let k in failed_actions) {
+                            //     let hexData = failed_actions[k].data;
+                            //     eos.abiBinToJson("eosio.token", "transfer", hexData).then(ret => {
+                            //         resQueueProductor(ret.args.memo, "failed", 500, resQueue);
+                            //     });
+                            // }
+                            console.log("single item failed...")
                         } else {
                             let actions = processed.action_traces;
                             for (let key in actions) {
