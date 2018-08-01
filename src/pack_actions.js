@@ -222,7 +222,7 @@ function removeReqQueue(reqQueue, messages, size) {
 
 function resQueueProductor(uuid, status, code, resQueue) {
     let action_res = '{"code":"' + code + '","status":"' + status + '","uuid":"' + uuid + '"}';
-    console.log(action_res);
+    // console.log(action_res);
     resQueue.push(action_res, function (err) {
         if (err != null) console.log(err);
     });
