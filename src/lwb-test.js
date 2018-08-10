@@ -23,7 +23,7 @@ const config = {
     no: false
 }
 const eos = Eos({
-    httpEndpoint: 'http://39.107.152.239:8000',
+    httpEndpoint: 'http://127.0.0.1:8000',
     chainId: '1c6ae7719a2a3b4ecb19584a30ff510ba1b6ded86e1fd8b8fc22f1179c622a32',
     keyProvider: keyProvider,
     expireInSeconds: 60,
@@ -121,22 +121,22 @@ var actionPool = function () {
     var pool = {}
     return {
         add: function (k, v) {
-            if (pool.hasOwnProperty(k)) {
-                let temp = pool[k]
-                if (temp instanceof Array) {
-                    temp.push(v)
-                    pool[k] = temp
-                } else {
-                    var actionArray = []
-                    actionArray.push(temp)
-                    actionArray.push(v)
-                    pool[k] = actionArray
-                }
-            } else {
-                var actionArray = []
-                actionArray.push(v)
-                pool[k] = actionArray
-            }
+            // if (pool.hasOwnProperty(k)) {
+            //     let temp = pool[k]
+            //     if (temp instanceof Array) {
+            //         temp.push(v)
+            //         pool[k] = temp
+            //     } else {
+            //         var actionArray = []
+            //         actionArray.push(temp)
+            //         actionArray.push(v)
+            //         pool[k] = actionArray
+            //     }
+            // } else {
+            var actionArray = []
+            actionArray.push(v)
+            pool[k] = actionArray
+            // }
         },
         getV: function (k) {
             return pool[k]
@@ -191,6 +191,29 @@ function getTXContent(transaction_id) {
     })
 }
 
+// eos.transaction({
+//     context_free_actions: [{
+//         account: "eosiotesta1",
+//         name: 'hi',
+//         authorization: [{
+//             actor: "eosiotesta1",
+//             permission: 'active'
+//         }],
+//         data: {
+//             "user": "yeah"
+//         }
+//     }]
+// }, config.optLocal).then(ret => {
+//     // let actionFreeArray = [];
+//     // actionFreeArray.push("heyheyhey");
+//     // actionFreeArray.push("yeahyeahyeah");
+//     // ret.transaction.transaction.context_free_actions = actionFreeArray;
+//     // eos.pushTransaction(ret).then(aa => {
+//     //     console.log(aa)
+//     // })
+//     console.log(ret)
+// })
+
 // getTXContent('697483c4d91b43f64c13f3a5d8d1eec921f67fe1fa09387082274eafa831c5ee')
 // testCreateTransaction()
 // generateAccounts("eosiotesta")
@@ -200,7 +223,7 @@ function getTXContent(transaction_id) {
 // getAccountsBalance("eosiotesta")
 // getAccountsBalance("eosiotestb")
 
-// testPushPoolTX("eosiotesta", "eosiotestb")
+testPushPoolTX("eosiotesta", "eosiotestb")
 // console.log(ecc.privateToPublic('5JxWkyTDwktJVs9MNgNgmaLrRc26ESswR9gk926g47t6UCqvmop'))
 // testPushTX("eosiotesta", "eosiotestb")
 // console.log(eos.fc.structs.action)
@@ -217,6 +240,7 @@ function testPushPoolTX(srcAccount, destAccount) {
         let dest = destAccount + com;
         let quality = "0.0001 SYS";
         let memo = i;
+        console.log("add: " + src, dest, quality, memo);
         actionPool.add(src, createTransferAction(src, dest, quality, memo));
     }
 
@@ -224,13 +248,15 @@ function testPushPoolTX(srcAccount, destAccount) {
     createTxLocalByActionPool(tx => {
             if (true) {
                 txPool.push(tx.transaction);
+                console.log(txPool.getSize())
                 if (txPool.getSize() == config.trx_pool_size) {
                     var signTxs = txPool.getPool();
-                    txPool.empty();
-                    eos.pushTransactions(signTxs).then(ret => {
-                        console.log("Push Pool Transactions spend time: " + (new Date().getTime() - start) + " ms");
-                        console.log(ret)
-                    })//50 actions: 3670 ms 3586 ms 4062 ms 4747 ms 3051 ms, average: 3823.2 ms
+                    console.log(signTxs)
+                    // txPool.empty();
+                    // eos.pushTransactions(signTxs).then(ret => {
+                    //     console.log("Push Pool Transactions spend time: " + (new Date().getTime() - start) + " ms");
+                    //     console.log(ret)
+                    // })//50 actions: 3670 ms 3586 ms 4062 ms 4747 ms 3051 ms, average: 3823.2 ms
                 }
             } else {
                 eos.pushTransaction(tx.transaction).then(ret => {

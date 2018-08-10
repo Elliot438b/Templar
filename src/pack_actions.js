@@ -3,7 +3,7 @@ const raq = require("redis-as-queue");
 const keyProvider = "5JxWkyTDwktJVs9MNgNgmaLrRc26ESswR9gk926g47t6UCqvmop";
 const fz_owner = "eosiotesta1";
 const eos = Eos({
-    httpEndpoint: 'http://39.107.152.239:8000',
+    httpEndpoint: 'http://127.0.0.1:8000',
     chainId: '1c6ae7719a2a3b4ecb19584a30ff510ba1b6ded86e1fd8b8fc22f1179c622a32',
     keyProvider: keyProvider,
     expireInSeconds: 120,
@@ -12,7 +12,7 @@ const eos = Eos({
 });
 const config = {
     trx_pool_size: 10,
-    action_pool_size: 5,
+    action_pool_size: 50,
     queue_listen_interval: 1, // ms
     optBCST: {expireInSeconds: 120, broadcast: true},
     optLocal: {expireInSeconds: 120, broadcast: false},
@@ -114,7 +114,7 @@ const resQueue = new raq.NormalQueue(config.queueResName, config.redisPort, conf
 let req_empty_flag = false;
 
 function reqQueuesConsume() {
-    let size = config.action_pool_size * config.trx_pool_size;
+    let size = config.action_pool_size;
     reqQueue.pop(size, function (err, replies) {
         if (err != null) {
             console.log(err);
