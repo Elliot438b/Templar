@@ -1,4 +1,4 @@
-const Eos = require('./src/index');
+const Eos = require('../src/index');
 const raq = require("redis-as-queue");
 const keyProvider = "5JxWkyTDwktJVs9MNgNgmaLrRc26ESswR9gk926g47t6UCqvmop";
 const fz_owner = "eosiotesta1";
@@ -13,7 +13,7 @@ const eos = Eos({
 const config = {
     trx_pool_size: 10,
     action_pool_size: 50,
-    queue_listen_interval: 100, // ms
+    queue_listen_interval: 1, // ms
     optBCST: {expireInSeconds: 120, broadcast: true},
     optLocal: {expireInSeconds: 120, broadcast: false},
     queueReqName: 'action_queue',
@@ -109,12 +109,12 @@ function createTxLocalByActionPool(callback) {
     }
 }
 
-// let start = new Date().getTime();
+let start = new Date().getTime();
 const reqQueue = new raq.NormalQueue(config.queueReqName, config.redisPort, config.redisUrl, {});
 const resQueue = new raq.NormalQueue(config.queueResName, config.redisPort, config.redisUrl, {});
-const failedQueue = new raq.NormalQueue(config.queueFailedName, config.redisPort, config.redisUrl, {});
+const failedQueue = new raq.UniqueQueue(config.queueFailedName, config.redisPort, config.redisUrl, {});
 
-// let req_empty_flag = false;
+let req_empty_flag = false;
 
 function reqQueuesConsume() {
     let size = config.action_pool_size;
@@ -208,7 +208,7 @@ function reqQueuesConsume() {
                 });
             }
         } else { // Queue empty.
-            // req_empty_flag = true;
+            req_empty_flag = true;
             return;
         }
     })
@@ -229,11 +229,10 @@ reqQueuesConsume();
  */
 if (config.listen_queue) {
     let interval = setInterval(function () {
-        // if (req_empty_flag) {
-        //     // console.log("listening... " + (new Date().getTime() - start) + " ms");
-        //     // clearInterval(interval);
-        //     console.log("Empty queue, listening ...")
-        // }
+        if (req_empty_flag) {
+            console.log("listening... " + (new Date().getTime() - start) + " ms");
+            clearInterval(interval);
+        }
         reqQueuesConsume();
     }, config.queue_listen_interval);
 }

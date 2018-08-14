@@ -8,7 +8,7 @@ const outputmsg = require('./outputmsg.js');
 const pushtransactions = require('./pushtransactions.js');
 const checkQueue = require('./check-queue.js');
 const consumer = require('./consumer.js');
-const pushTX = require('./src/push_tx.js');
+const pushTX = require('./push_tx.js');
 const raq = require("redis-as-queue");
 const config = {
     queueReqName: 'action_queue',

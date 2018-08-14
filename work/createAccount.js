@@ -1,5 +1,5 @@
-Eos = require('../src')
-outputmsg = require('../outputmsg.js')
+Eos = require('../src/index')
+outputmsg = require('./outputmsg.js')
 keyProvider = [
   '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3',
   Eos.modules.ecc.seedPrivate('currency')

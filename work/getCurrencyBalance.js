@@ -1,4 +1,4 @@
-Eos = require('../src')
+Eos = require('../src/index')
   
 keyProvider = [
   '5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3',

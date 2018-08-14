@@ -1,4 +1,4 @@
-const Eos = require('../src');
+const Eos = require('../src/index');
 const raq = require("redis-as-queue");
 const keyProvider = "5JxWkyTDwktJVs9MNgNgmaLrRc26ESswR9gk926g47t6UCqvmop";
 const fz_owner = "eosiotesta1";

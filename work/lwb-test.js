@@ -2,7 +2,7 @@
  * pre-execution: python3 ./bios-boot-tutorial.py -k -w -b -s -c -t {-l}
  */
 
-const Eos = require('./src/index')
+const Eos = require('../src/index')
 const ecc = require('eosjs-ecc')
 const raq = require("redis-as-queue");
 const keyProvider = [
@@ -191,30 +191,32 @@ function getTXContent(transaction_id) {
     })
 }
 
-eos.transaction({
-    context_free_actions: [{
-        account: "eosio.null",
-        name: 'nonce',
-        data: {
-            "user": "hahaha"
-        }
-    }],
-    actions: [{
-        account: "eosiotesta1",
-        name: 'hi',
-        authorization: [{
-            actor: "eosiotesta1",
-            permission: 'active'
+function cfa() {
+    eos.transaction({
+        context_free_actions: [{
+            account: "eosio.null",
+            name: 'nonce',
+            data: {
+                "value": "hahaha"
+            }
         }],
-        data: {
-            "user": "yeah"
-        }
-    }]
-}, config.optBCST).then(ret => {
-    console.log(ret)
-})
+        actions: [{
+            account: "eosiotesta1",
+            name: 'hi',
+            authorization: [{
+                actor: "eosiotesta1",
+                permission: 'active'
+            }],
+            data: {
+                "user": "yeah"
+            }
+        }]
+    }, config.optBCST).then(ret => {
+        console.log(ret)
+    })
+}
 
-
+// cfa();
 // getTXContent('697483c4d91b43f64c13f3a5d8d1eec921f67fe1fa09387082274eafa831c5ee')
 // testCreateTransaction()
 // generateAccounts("eosiotesta")

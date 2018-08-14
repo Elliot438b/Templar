@@ -70,6 +70,7 @@ const charidx = ch => {
   @see types.hpp string_to_name
 
   @arg {string} name - A string to encode, up to 12 characters long.
+  @arg {string} [littleEndian = true] - Little or Bigendian encoding
 
   @return {string<uint64>} - compressed string (from name arg).  A string is
     always used because a number could exceed JavaScript's 52 bit limit.
@@ -112,6 +113,8 @@ function encodeName(name, littleEndian = true) {
 
 /**
   @arg {Long|String|number} value uint64
+  @arg {string} [littleEndian = true] - Little or Bigendian encoding
+
   @return {string}
 */
 function decodeName(value, littleEndian = true) {
@@ -193,14 +196,15 @@ function DecimalString(value) {
 
   @example DecimalPad(10.2, 3) === '10.200'
 
-  @arg {number|string|object.toString} value
-  @arg {number} [precision = null] - number of decimal places (null skips padding)
+  @arg {number|string|object.toString} num
+  @arg {number} [precision = null] - number of decimal places.  Null skips
+    padding suffix but still applies number format normalization.
   @return {string} decimal part is added and zero padded to match precision
 */
 function DecimalPad(num, precision) {
   const value = DecimalString(num)
   if(precision == null) {
-    return num
+    return value
   }
 
   assert(precision >= 0 && precision <= 18, `Precision should be 18 characters or less`)
@@ -296,7 +300,7 @@ function parseAsset(str) {
   const symbolMatch = str.match(/(^| |,)([A-Z]+)(@|$)/)
   const symbol = symbolMatch ? symbolMatch[2] : null
 
-  const [, contractRaw] = str.split('@')
+  const [, contractRaw = ''] = str.split('@')
   const contract = /^[a-z0-5]+(\.[a-z0-5]+)*$/.test(contractRaw) ? contractRaw : null
 
   const check = printAsset({amount, precision, symbol, contract})
