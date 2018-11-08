@@ -216,6 +216,7 @@ function cfa() {
     })
 }
 
+// test
 // cfa();
 // getTXContent('697483c4d91b43f64c13f3a5d8d1eec921f67fe1fa09387082274eafa831c5ee')
 // testCreateTransaction()
