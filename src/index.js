@@ -27,7 +27,7 @@ const Eos = (config = {}) => {
       if(target[key] === undefined) {
         target[key] = defaults[key]
       }
-    })
+    })module.exports
   }
 
   applyDefaults(config, configDefaults)
